@@ -33,7 +33,7 @@ local function is_uincode_4e00_to_9fff()
  end
 end
 
-function auto_change()
+local function auto_change()
 	if is_uincode_4e00_to_9fff() then
 		fcitx5_switch_to_ch()
 	end
@@ -41,10 +41,14 @@ end
 
 vim.api.nvim_create_autocmd("InsertLeave", {
 	pattern = {"*"},
-	command = "lua Fcitx5_switch_to_en()"
+	callback = function ()
+		fcitx5_switch_to_en()
+	end
 })
 
 vim.api.nvim_create_autocmd("InsertEnter", {
 	pattern = {"*"},
-	command = "lua Auto_change()"
+	callback = function ()
+		auto_change()
+	end
 })
