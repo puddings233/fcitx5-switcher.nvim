@@ -1,11 +1,3 @@
-function Fcitx5_switch_to_en()
-	os.execute("fcitx5-remote -c")
-end
-
-function Fcitx5_switch_to_ch()
-	os.execute("fcitx5-remote -o")
-end
-
 function Fcitx5_manual_switch_i()
 	vim.api.nvim_input("i")
 	os.execute("fcitx5-remote -o")
@@ -13,6 +5,14 @@ end
 
 function Fcitx5_manual_switch_a()
 	vim.api.nvim_input("a")
+	os.execute("fcitx5-remote -o")
+end
+
+local function fcitx5_switch_to_en()
+	os.execute("fcitx5-remote -c")
+end
+
+local function fcitx5_switch_to_ch()
 	os.execute("fcitx5-remote -o")
 end
 
@@ -33,18 +33,22 @@ local function is_uincode_4e00_to_9fff()
  end
 end
 
-function Auto_change()
+local function auto_change()
 	if is_uincode_4e00_to_9fff() then
-		Fcitx5_switch_to_ch()
+		fcitx5_switch_to_ch()
 	end
 end
 
 vim.api.nvim_create_autocmd("InsertLeave", {
 	pattern = {"*"},
-	command = "lua Fcitx5_switch_to_en()"
+	callback = function ()
+		fcitx5_switch_to_en()
+	end
 })
 
 vim.api.nvim_create_autocmd("InsertEnter", {
 	pattern = {"*"},
-	command = "lua Auto_change()"
+	callback = function ()
+		auto_change()
+	end
 })
