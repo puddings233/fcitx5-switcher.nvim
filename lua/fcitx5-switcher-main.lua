@@ -1,73 +1,56 @@
-local M = {}
-
-local fcitx5_available = nil
-
-local function check_fcitx5_available()
-	if fcitx5_available == nil then
-		fcitx5_available = os.execute("fcitx5-remote >/dev/null 2>&1") == 0
-	end
-	return fcitx5_available
+function Fcitx5_manual_switch_i()
+	vim.api.nvim_input("i")
+	vim.system({"fcitx5-remote", "-o"}, {on_exit})
 end
 
-local function safe_fcitx5_operation(command)
-	if not check_fcitx5_available() then return end
-	local handle = io.popen(command .. " 2>/dev/null", "r")
-	if handle then
-		handle:close()
-	end
+function Fcitx5_manual_switch_a()
+	vim.api.nvim_input("a")
+	vim.system({"fcitx5-remote", "-o"}, {on_exit})
 end
 
 local function fcitx5_switch_to_en()
-	safe_fcitx5_operation("fcitx5-remote -c")
+	vim.system({"fcitx5-remote", "-c"}, {on_exit})
 end
 
 local function fcitx5_switch_to_ch()
-	safe_fcitx5_operation("fcitx5-remote -o")
+	vim.system({"fcitx5-remote", "-o"}, {on_exit})
 end
 
-local function is_chinese_character()
-	local line = vim.api.nvim_get_current_line()
-	local current_col = vim.api.nvim_win_get_cursor(0)[2] + 1
-
-	if current_col <= 1 then return false end
-
-	local prev_char = line:sub(current_col - 1, current_col - 1)
-	if #prev_char == 0 then return false end
-
-	local codepoint = prev_char:byte()
-	return codepoint >= 0x4E00 and codepoint <= 0x9FFF
-end
-
-function M.create_manual_switch(mode_key)
-	return function()
-		vim.api.nvim_input(mode_key)
-		fcitx5_switch_to_ch()
+local function is_uincode_4e00_to_9fff()
+	local current_row, current_col = unpack(vim.api.nvim_win_get_cursor(0))
+	if current_col < 3 then
+		return false
+	end
+	local char = vim.api.nvim_buf_get_text(0, current_row - 1, current_col - 3, current_row - 1, current_col, {})[1]
+	if not char or #char ~= 3 then
+		return false
+	end
+	local char_byte_1, char_byte_2, char_byte_3 = string.byte(char, 1, 3)
+	if ( char_byte_1 >= 228 and char_byte_1 <= 233 and
+		char_byte_2 >= 128 and char_byte_2 <=191 and
+		char_byte_3 >= 128 and char_byte_3 <=191 ) then
+		return true
+	else
+		return false
 	end
 end
 
 local function auto_change()
-	if is_chinese_character() then
+	if is_uincode_4e00_to_9fff() then
 		fcitx5_switch_to_ch()
 	end
 end
 
-function M.setup()
-	vim.api.nvim_create_autocmd("InsertLeave", {
-		pattern = "*",
-		callback = function()
-			vim.schedule_wrap(fcitx5_switch_to_en)()
-		end
-	})
+vim.api.nvim_create_autocmd("InsertLeave", {
+	pattern = {"*"},
+	callback = function ()
+		fcitx5_switch_to_en()
+	end
+})
 
-	vim.api.nvim_create_autocmd("InsertEnter", {
-		pattern = "*",
-		callback = function()
-			vim.schedule_wrap(auto_change)()
-		end
-	})
-end
-
-M.Fcitx5_manual_switch_i = M.create_manual_switch("i")
-M.Fcitx5_manual_switch_a = M.create_manual_switch("a")
-
-return M
+vim.api.nvim_create_autocmd("InsertEnter", {
+	pattern = {"*"},
+	callback = function ()
+		auto_change()
+	end
+})
