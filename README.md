@@ -10,7 +10,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 require("lazy").setup({
   "puddings233/fcitx5-switcher.nvim",
   config = function()
-    require("fcitx5-switcher-custom").setup({
+    require("fcitx5-switcher").setup({
       enable_manual = false,
       key = "nil",
       mod = "nil"
@@ -20,7 +20,7 @@ require("lazy").setup({
 ~~~
 ### Configuration
 ~~~lua
-require("fcitx5-switcher-custom").setup({
+require("fcitx5-switcher").setup({
   -- enables or disables feat 2, accepts ‘true’, ‘false’.
   enable_manual = false,
   -- key for function 2
